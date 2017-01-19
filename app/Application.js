@@ -1,7 +1,7 @@
 Ext.define('Rambox.Application', {
 	 extend: 'Ext.app.Application'
 
-	,name: 'Rambox'
+	,name: 'Rambox (Gü\' build)'
 
 	,requires: [
 		 'Rambox.ux.Auth0'
@@ -25,16 +25,9 @@ Ext.define('Rambox.Application', {
 	}
 
 	,launch: function () {
-		// Set Google Analytics events
-		ga_storage._setAccount('UA-80680424-1');
-		ga_storage._trackPageview('/index.html', 'main');
-		ga_storage._trackEvent('Versions', require('electron').remote.app.getVersion());
 
 		// Initialize Auth0
 		Rambox.ux.Auth0.init();
-
-		// Check for updates
-		Rambox.app.checkUpdate(true);
 
 		// Add shortcuts to switch services using CTRL + Number
 		var map = new Ext.util.KeyMap({
@@ -183,9 +176,9 @@ Ext.define('Rambox.Application', {
 			}
 		});
 
-		if ( process.platform !== 'win32' ) {
-			this.checkUpdate(true);
-		}
+		// if ( process.platform !== 'win32' ) {
+		// 	this.checkUpdate(true);
+		// }
 
 		// Define default value
 		if ( localStorage.getItem('dontDisturb') === null ) localStorage.setItem('dontDisturb', false);
@@ -202,9 +195,9 @@ Ext.define('Rambox.Application', {
 	,updateTotalNotifications: function( newValue, oldValue ) {
 		newValue = parseInt(newValue);
 		if ( newValue > 0 )	{
-			document.title = 'Rambox (' + Rambox.util.Format.formatNumber(newValue) + ')';
+			document.title = 'Rambox (Gü\'s build) (' + Rambox.util.Format.formatNumber(newValue) + ')';
 		} else {
-			document.title = 'Rambox';
+			document.title = 'Rambox (Gü\'s build)';
 		}
 	}
 
