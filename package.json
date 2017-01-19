@@ -31,8 +31,8 @@
 		"all:linux": "npm run sencha:clean && npm run sencha:compile && npm run build:linux"
 	},
 	"build": {
-		"productName": "Rambox",
-		"appId": "com.saenzramiro.rambox",
+		"productName": "rambox-gue",
+		"appId": "com.github.guedressel.rambox",
 		"category": "public.app-category.productivity",
 		"asar": true,
 		"mac": {
@@ -60,7 +60,7 @@
 			]
 		},
 		"win": {
-			"title": "Rambox",
+			"title": "Rambox (gue)",
 
 			"target": [
 				"squirrel",
@@ -73,10 +73,7 @@
 		},
 		"linux": {
 			"target": [
-				"AppImage",
 				"deb",
-				"rpm",
-				"zip",
 				"tar.gz"
 			],
 			"icon": "./resources/Icon.png"

@@ -1,18 +1,18 @@
 {
-	"name": "Rambox",
-	"productName": "Rambox",
-	"version": "0.4.5",
-	"description": "Rambox",
+	"name": "Rambox-gue",
+	"productName": "Rambox (Gü's build)",
+	"version": "0.1.0",
+	"description": "A flavour of Rambox",
 	"main": "electron/main.js",
 	"private": true,
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/saenzramiro/rambox.git"
+		"url": "https://github.com/guedressel/rambox.git"
 	},
 	"bugs": {
-		"url": "https://github.com/saenzramiro/rambox/issues"
+		"url": "https://github.com/guedressel/rambox/issues"
 	},
-	"homepage": "http://rambox.pro",
+	"homepage": "https://github.com/guedressel/rambox",
 	"keywords": [
 		"Rambox",
 		"messaging",
@@ -27,6 +27,7 @@
 		"skype"
 	],
 	"author": "Ramiro Saenz <saenzramiro@gmail.com>",
+	"contributors": "guedressel",
 	"license": "MIT",
 	"dependencies": {
 		"auto-launch": "4.0.0",
