@@ -6,17 +6,17 @@ Ext.define('Rambox.ux.WebView',{
 	,xtype: 'webview'
 
 	,requires: [
-		'Rambox.util.Format',
-		'Rambox.util.Notifier',
-		'Rambox.util.UnreadCounter'
-	],
+		 'Rambox.util.Format'
+		,'Rambox.util.Notifier'
+		,'Rambox.util.UnreadCounter'
+	]
 
 	// private
-	zoomLevel: 0,
-	currentUnreadCount: 0,
+	,zoomLevel: 0
+	,currentUnreadCount: 0
 
 	// CONFIG
-	hideMode: 'offsets'
+	,hideMode: 'offsets'
 	,initComponent: function(config) {
 		var me = this;
 
@@ -34,7 +34,7 @@ Ext.define('Rambox.ux.WebView',{
 		}
 
 		// Allow Custom sites with self certificates
-		if ( me.record.get('trust') ) ipc.send('allowCertificate', me.src);
+		//if ( me.record.get('trust') ) ipc.send('allowCertificate', me.src);
 
 		Ext.apply(me, {
 			 items: me.webViewConstructor()
@@ -123,6 +123,18 @@ Ext.define('Rambox.ux.WebView',{
 					]
 				}
 			}
+			,bbar: {
+				 xtype: 'statusbar'
+				,defaultText: '<i class="fa fa-check fa-fw" aria-hidden="true"></i> Ready'
+				,busyIconCls : ''
+				,busyText: '<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Loading...'
+				,items: [
+					,{
+						 xtype: 'tbtext'
+						,itemId: 'url'
+					}
+				]
+			}
 			,listeners: {
 				 afterrender: me.onAfterRender
 			}
@@ -158,10 +170,10 @@ Ext.define('Rambox.ux.WebView',{
 					,plugins: 'true'
 					,allowtransparency: 'on'
 					,autosize: 'on'
-					,disablewebsecurity: 'on'
-					,blinkfeatures: 'ApplicationCache,GlobalCacheStorage'
-					,useragent: Ext.getStore('ServicesList').getById(me.record.get('type')).get('userAgent'),
-					preload: './resources/js/rambox-service-api.js'
+					//,webpreferences: 'nodeIntegration=no'
+					//,disablewebsecurity: 'on' // Disabled because some services (Like Google Drive) dont work with this enabled
+					,useragent: Ext.getStore('ServicesList').getById(me.record.get('type')).get('userAgent')
+					,preload: './resources/js/rambox-service-api.js'
 				}
 			};
 
@@ -187,16 +199,17 @@ Ext.define('Rambox.ux.WebView',{
 		// Show and hide spinner when is loading
 		webview.addEventListener("did-start-loading", function() {
 			console.info('Start loading...', me.src);
-			me.mask('Loading...', 'bottomMask');
-			// Manually remove modal from mask
-			Ext.cq1('#'+me.id).el.dom.getElementsByClassName('bottomMask')[0].parentElement.className = '';
+			me.down('statusbar').showBusy();
 		});
 		webview.addEventListener("did-stop-loading", function() {
-			me.unmask();
+			me.down('statusbar').clearStatus({useDefaults: true});
 		});
 
 		webview.addEventListener("did-finish-load", function(e) {
 			Rambox.app.setTotalServicesLoaded( Rambox.app.getTotalServicesLoaded() + 1 );
+
+			// Apply saved zoom level
+			webview.setZoomLevel(me.record.get('zoomLevel'));
 		});
 
 		// Open links in default browser
@@ -214,8 +227,58 @@ Ext.define('Rambox.ux.WebView',{
 					}
 					break;
 				case 'hangouts':
+					e.preventDefault();
 					if ( e.url.indexOf('plus.google.com/u/0/photos/albums') >= 0 ) {
 						ipc.send('image:popup', e.url, e.target.partition);
+						return;
+					} else if ( e.url.indexOf('https://hangouts.google.com/hangouts/_/CONVERSATION/') >= 0 ) {
+						me.add({
+							 xtype: 'window'
+							,title: 'Video Call'
+							,width: '80%'
+							,height: '80%'
+							,maximizable: true
+							,modal: true
+							,items: {
+								 xtype: 'component'
+								,hideMode: 'offsets'
+								,autoRender: true
+								,autoShow: true
+								,autoEl: {
+									 tag: 'webview'
+									,src: e.url
+									,style: 'width:100%;height:100%;'
+									,partition: 'persist:' + me.record.get('type') + '_' + me.id.replace('tab_', '') + (localStorage.getItem('id_token') ? '_' + Ext.decode(localStorage.getItem('profile')).user_id : '')
+									,useragent: Ext.getStore('ServicesList').getById(me.record.get('type')).get('userAgent')
+								}
+							}
+						}).show();
+						return;
+					}
+					break;
+				case 'slack':
+					if ( e.url.indexOf('slack.com/call/') >= 0 ) {
+						me.add({
+							 xtype: 'window'
+							,title: e.options.title
+							,width: e.options.width
+							,height: e.options.height
+							,maximizable: true
+							,modal: true
+							,items: {
+								 xtype: 'component'
+								,hideMode: 'offsets'
+								,autoRender: true
+								,autoShow: true
+								,autoEl: {
+									 tag: 'webview'
+									,src: e.url
+									,style: 'width:100%;height:100%;'
+									,partition: e.options.webPreferences.partition
+									,useragent: Ext.getStore('ServicesList').getById(me.record.get('type')).get('userAgent')
+								}
+							}
+						}).show();
 						e.preventDefault();
 						return;
 					}
@@ -257,10 +320,24 @@ Ext.define('Rambox.ux.WebView',{
 				console.log(js_preventBlink);
 				webview.executeJavaScript(js_preventBlink);
 			}
+
 			console.groupEnd();
 
 			// Scroll always to top (bug)
 			webview.executeJavaScript('document.body.scrollTop=0;');
+
+			// Handles Certificate Errors
+			webview.getWebContents().on('certificate-error', function(event, url, error, certificate, callback) {
+				if ( me.record.get('trust') ) {
+					event.preventDefault();
+					callback(true);
+				} else {
+					callback(false);
+				}
+				me.down('statusbar').setStatus({
+					text: '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Certification Warning'
+				});
+			});
 		});
 
 		webview.addEventListener('ipc-message', function(event) {
@@ -272,6 +349,9 @@ Ext.define('Rambox.ux.WebView',{
 				case 'rambox.clearUnreadCount':
 					handleClearUnreadCount(event);
 					break;
+				case 'rambox.showWindowAndActivateTab':
+					showWindowAndActivateTab(event);
+					break;
 			}
 
 			/**
@@ -280,6 +360,7 @@ Ext.define('Rambox.ux.WebView',{
 			 */
 			function handleClearUnreadCount() {
 				me.tab.setBadgeText('');
+				me.currentUnreadCount = 0;
 			}
 
 			/**
@@ -293,8 +374,15 @@ Ext.define('Rambox.ux.WebView',{
 					var count = event.args[0];
 					if (count === parseInt(count, 10)) {
 						me.tab.setBadgeText(Rambox.util.Format.formatNumber(count));
+
+						me.doManualNotification(count);
 					}
 				}
+			}
+
+			function showWindowAndActivateTab(event) {
+				require('electron').remote.getCurrentWindow().show();
+				Ext.cq1('app-main').setActiveTab(me);
 			}
 		});
 
@@ -308,22 +396,20 @@ Ext.define('Rambox.ux.WebView',{
 				count = count === '•' ? count : Ext.isArray(count.match(/\d+/g)) ? count.match(/\d+/g).join("") : count.match(/\d+/g); // Some services have special characters. Example: (•)
 				count = count === null ? '0' : count;
 
-        me.setUnreadCount(count);
+				me.setUnreadCount(count);
 			});
 		}
 
 		webview.addEventListener('did-get-redirect-request', function( e ) {
-			if ( e.isMainFrame ) webview.loadURL(e.newURL);
+			if ( e.isMainFrame ) Ext.defer(function() { webview.loadURL(e.newURL); }, 1000); // Applied a defer because sometimes is not redirecting. TweetDeck 2FA is an example.
 		});
 
-		if(ipc.sendSync('getConfig').spellcheck) {
-			var webFrame = require('electron').webFrame;
-			var SpellCheckProvider = require('electron-spell-check-provider');
-			webFrame.setSpellCheckProvider('en-US', true, new SpellCheckProvider('en-US'));
-		}
-	},
+		webview.addEventListener('update-target-url', function( url ) {
+			me.down('statusbar #url').setText(url.url);
+		});
+	}
 
-	setUnreadCount: function(newUnreadCount) {
+	,setUnreadCount: function(newUnreadCount) {
 		var me = this;
 
 		if (me.record.get('includeInGlobalUnreadCounter') === true) {
@@ -334,53 +420,61 @@ Ext.define('Rambox.ux.WebView',{
 
 		me.setTabBadgeText(Rambox.util.Format.formatNumber(newUnreadCount));
 
-		/**
-		 * Dispatch manual notification if
-		 * • service doesn't have notifications, so Rambox does them
-		 * • count increased
-		 * • not in dnd mode
-		 * • notifications enabled
-		 */
+		me.doManualNotification(parseInt(newUnreadCount));
+	}
+
+	,refreshUnreadCount: function() {
+		this.setUnreadCount(this.currentUnreadCount);
+	}
+
+	/**
+	 * Dispatch manual notification if
+	 * • service doesn't have notifications, so Rambox does them
+	 * • count increased
+	 * • not in dnd mode
+	 * • notifications enabled
+	 *
+	 * @param {int} count
+	 */
+	,doManualNotification: function(count) {
+		var me = this;
+
 		if (Ext.getStore('ServicesList').getById(me.type).get('manual_notifications') &&
-			me.currentUnreadCount < newUnreadCount &&
+			me.currentUnreadCount < count &&
 			me.record.get('notifications') &&
 			!JSON.parse(localStorage.getItem('dontDisturb'))) {
-			Rambox.util.Notifier.dispatchNotification(me, newUnreadCount);
+				Rambox.util.Notifier.dispatchNotification(me, count);
 		}
 
-		me.currentUnreadCount = newUnreadCount;
-	},
-
-	refreshUnreadCount: function() {
-		this.setUnreadCount(this.currentUnreadCount);
-	},
+		me.currentUnreadCount = count;
+	}
 
 	/**
 	 * Sets the tab badge text depending on the service config param "displayTabUnreadCounter".
 	 *
 	 * @param {string} badgeText
 	 */
-	setTabBadgeText: function(badgeText) {
+	,setTabBadgeText: function(badgeText) {
 		var me = this;
 		if (me.record.get('displayTabUnreadCounter') === true) {
 			me.tab.setBadgeText(badgeText);
 		} else {
 			me.tab.setBadgeText('');
 		}
-	},
+	}
 
 	/**
 	 * Clears the unread counter for this view:
 	 * • clears the badge text
 	 * • clears the global unread counter
 	 */
-	clearUnreadCounter: function() {
+	,clearUnreadCounter: function() {
 		var me = this;
 		me.tab.setBadgeText('');
 		Rambox.util.UnreadCounter.clearUnreadCountForService(me.record.get('id'));
-	},
+	}
 
-	reloadService: function(btn) {
+	,reloadService: function(btn) {
 		var me = this;
 		var webview = me.down('component').el.dom;
 
@@ -465,7 +559,10 @@ Ext.define('Rambox.ux.WebView',{
 		var webview = me.down('component').el.dom;
 
 		me.zoomLevel = me.zoomLevel + 0.25;
-		if ( me.record.get('enabled') ) webview.setZoomLevel(me.zoomLevel);
+		if ( me.record.get('enabled') ) {
+			webview.setZoomLevel(me.zoomLevel);
+			me.record.set('zoomLevel', me.zoomLevel);
+		}
 	}
 
 	,zoomOut: function() {
@@ -473,7 +570,10 @@ Ext.define('Rambox.ux.WebView',{
 		var webview = me.down('component').el.dom;
 
 		me.zoomLevel = me.zoomLevel - 0.25;
-		if ( me.record.get('enabled') ) webview.setZoomLevel(me.zoomLevel);
+		if ( me.record.get('enabled') ) {
+			webview.setZoomLevel(me.zoomLevel);
+			me.record.set('zoomLevel', me.zoomLevel);
+		}
 	}
 
 	,resetZoom: function() {
@@ -481,6 +581,9 @@ Ext.define('Rambox.ux.WebView',{
 		var webview = me.down('component').el.dom;
 
 		me.zoomLevel = 0;
-		if ( me.record.get('enabled') ) webview.setZoomLevel(0);
+		if ( me.record.get('enabled') ) {
+			webview.setZoomLevel(0);
+			me.record.set('zoomLevel', me.zoomLevel);
+		}
 	}
 });

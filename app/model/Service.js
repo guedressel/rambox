@@ -37,21 +37,18 @@ Ext.define('Rambox.model.Service', {
 		 name: 'muted'
 		,type: 'boolean'
 		,defaultValue: false
-	},
-	{
-		name: 'displayTabUnreadCounter',
-		type: 'boolean',
-		defaultValue: true
-	},
-	{
-		name: 'includeInGlobalUnreadCounter',
-		type: 'boolean',
-		defaultValue: true
-	},
-	{
+	},{
+		 name: 'displayTabUnreadCounter'
+		,type: 'boolean'
+		,defaultValue: true
+	},{
+		 name: 'includeInGlobalUnreadCounter'
+		,type: 'boolean'
+		,defaultValue: true
+	},{
 		 name: 'trust'
 		,type: 'boolean'
-		,defaultValue: false
+		,defaultValue: true
 	},{
 		 name: 'enabled'
 		,type: 'boolean'
@@ -60,5 +57,9 @@ Ext.define('Rambox.model.Service', {
 		 name: 'js_unread'
 		,type: 'string'
 		,defaultValue: ''
+	},{
+		 name: 'zoomLevel'
+		,type: 'number'
+		,defaultValue: 0
 	}]
 });

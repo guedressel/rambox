@@ -28,6 +28,8 @@ Ext.define('Rambox.store.ServicesList', {
 			,description: 'WhatsApp is a cross-platform mobile messaging app for iPhone, BlackBerry, Android, Windows Phone and Nokia. Send text, video, images, audio for free.'
 			,url: 'https://web.whatsapp.com/'
 			,type: 'messaging'
+			,js_unread: 'function checkUnread(){var a=document.getElementsByClassName("infinite-list-item"),b=0;for(i=0;i<a.length;i++)if(!(a[i].getElementsByClassName("icon-muted").length>0||0===a[i].getElementsByClassName("unread-count").length)){var c=parseInt(a[i].getElementsByClassName("unread-count")[0].innerHTML.trim());b+=isNaN(c)?0:c}updateBadge(b)}function updateBadge(a){a>=1?rambox.setUnreadCount(a):rambox.clearUnreadCount()}var originalTitle=document.title;setInterval(checkUnread,1e3);'
+			,dont_update_unread_from_title: true
 		},
 		{
 			 id: 'slack'
@@ -36,7 +38,7 @@ Ext.define('Rambox.store.ServicesList', {
 			,description: 'Slack brings all your communication together in one place. It’s real-time messaging, archiving and search for modern teams.'
 			,url: 'https://___.slack.com/'
 			,type: 'messaging'
-			,js_unread: 'function checkUnread(){var a=0,b=0;$(".unread_msgs").each(function(){a+=parseInt($(this).html())}),$(".unread_highlights").each(function(){b+=parseInt($(this).html())}),updateBadge(a,b)}function updateBadge(a,b){var c=b>0?"("+b+") ":a>0?"(•) ":"";document.title=c+originalTitle}var originalTitle=document.title;setInterval(checkUnread,3000);'
+			,js_unread: 'function checkUnread(){var a=0,b=0;$(".unread_msgs").each(function(){a+=isNaN(parseInt($(this).html())) ? 0 : parseInt($(this).html())}),$(".unread_highlights").each(function(){b+=isNaN(parseInt($(this).html())) ? 0 : parseInt($(this).html())}),updateBadge(a,b)}function updateBadge(a,b){var c=b>0?"("+b+") ":a>0?"(•) ":"";document.title=c+originalTitle}var originalTitle=document.title;setInterval(checkUnread,3000);'
 		},
 		{
 			 id: 'noysi'
@@ -75,7 +77,8 @@ Ext.define('Rambox.store.ServicesList', {
 			,type: 'messaging'
 			,titleBlink: true
 			,manual_notifications: true
-			,js_unread: 'function checkUnread(){updateBadge(document.getElementById("hangout-landing-chat").lastChild.contentWindow.document.body.getElementsByClassName("ee").length)}function updateBadge(e){e>=1?document.title="("+e+") "+originalTitle:document.title=originalTitle}var originalTitle=document.title;setInterval(checkUnread,3000);'
+			,js_unread: 'function checkUnread(){updateBadge(document.getElementById("hangout-landing-chat").lastChild.contentWindow.document.body.getElementsByClassName("ee").length)}function updateBadge(e){e>=1?rambox.setUnreadCount(e):rambox.clearUnreadCount()}setInterval(checkUnread,3000);'
+			//,js_unread: 'function checkUnread(){updateBadge(document.getElementById("hangout-landing-chat").lastChild.contentWindow.document.body.getElementsByClassName("ee").length)}function updateBadge(e){e>=1?document.title="("+e+") "+originalTitle:document.title=originalTitle}var originalTitle=document.title;setInterval(checkUnread,3000);'
 		},
 		{
 			 id: 'hipchat'
@@ -94,8 +97,8 @@ Ext.define('Rambox.store.ServicesList', {
 			,description: 'Telegram is a messaging app with a focus on speed and security. It’s super-fast, simple, secure and free.'
 			,url: 'https://web.telegram.org/'
 			,type: 'messaging'
-			,titleBlink: true
-			,js_unread: 'function checkUnread(){var e=document.getElementsByClassName("im_dialog_badge badge"),t=0;for(i=0;i<e.length;i++)if(!e[i].classList.contains("im_dialog_badge_muted")){t+=parseInt(e[i].innerHTML.trim())}}function updateBadge(e){document.title="("+e+") RamboxService"}setInterval(checkUnread,3000);'
+			,js_unread: 'function checkUnread(){var e=document.getElementsByClassName("im_dialog_badge badge"),t=0;for(i=0;i<e.length;i++)if(!e[i].classList.contains("im_dialog_badge_muted")){t+=parseInt(e[i].innerHTML.trim())}updateBadge(t)}function updateBadge(e){e>=1?rambox.setUnreadCount(e):rambox.clearUnreadCount()}setInterval(checkUnread,3000);'
+			,dont_update_unread_from_title: true
 		},
 		{
 			 id: 'wechat'
@@ -142,7 +145,9 @@ Ext.define('Rambox.store.ServicesList', {
 			,description: 'GroupMe brings group text messaging to every phone. Group message with the people in your life that are important to you.'
 			,url: 'https://web.groupme.com/signin'
 			,type: 'messaging'
-			,note: 'To enable desktop notifications, you have to go to Options inside GroupMe.'
+			,note: 'To enable desktop notifications, you have to go to Options inside GroupMe. To count unread messages, be sure to be in Chats.'
+			,js_unread: 'function checkUnread(){var a=document.querySelectorAll(".badge-count"),b=0;for(i=0;i<a.length;i++)b+=parseInt(a[i].innerHTML.trim());updateBadge(b)}function updateBadge(a){a>=1?rambox.setUnreadCount(a):rambox.clearUnreadCount()}setInterval(checkUnread,3e3);'
+			,dont_update_unread_from_title: true
 		},
 		{
 			 id: 'grape'
@@ -457,6 +462,7 @@ Ext.define('Rambox.store.ServicesList', {
 			,description: 'Yandex is a free webmail service with unlimited mail storage, protection from viruses and spam, access from web interface, etc.'
 			,url: 'https://mail.yandex.com/'
 			,type: 'email'
+			,js_unread: 'function checkUnread(){var t=parseInt($(".mail-MessagesFilters-Item_unread .mail-LabelList-Item_count").html());updateBadge(isNaN(t)?0:t)}function updateBadge(e){e>=1?document.title="("+e+") "+originalTitle:document.title=originalTitle}var originalTitle=document.title;setInterval(checkUnread,3000);'
 		},
 		{
 			 id: 'irccloud'
@@ -491,7 +497,7 @@ Ext.define('Rambox.store.ServicesList', {
 			,description: 'KiwiIRC makes Web IRC easy. A hand-crafted IRC client that you can enjoy. Designed to be used easily and freely.'
 			,url: 'https://kiwiirc.com/client'
 			,type: 'messaging'
-			,js_unread: 'function getUnreadCount(){var a=0;$(".activity").each(function(){a+=parseInt($(this).html())});var b=!1;return $(".panel[style*=display: block] .msg").each(function(){b?a++:$(this).hasClass("last_seen")&&(b=!0)}),a}function updateTitle(a){count=getUnreadCount(),cleanTitle=a.match(re),null!==cleanTitle&&cleanTitle.length>1?cleanTitle=cleanTitle[1]:cleanTitle=a,a=count>0?"("+getUnreadCount()+") "+cleanTitle:cleanTitle,$("title").text(a)}var re=/\(\d+\)[ ](.*)/;Object.defineProperty(document,"title",{configurable:!0,set:function(a){updateTitle(a)},get:function(){return $("title").text()}}),setInterval(function(){updateTitle(document.title)},3e3);'
+			,js_unread: 'function getUnreadCount(){var a=0;$(".activity").each(function(){a+=parseInt($(this).html())});var b=!1;return $(".panel[style*=\'display:block\'] .msg").each(function(){b?a++:$(this).hasClass("last_seen")&&(b=!0)}),a}function updateTitle(a){count=getUnreadCount(),cleanTitle=a.match(re),null!==cleanTitle&&cleanTitle.length>1?cleanTitle=cleanTitle[1]:cleanTitle=a,a=count>0?"("+getUnreadCount()+") "+cleanTitle:cleanTitle,$("title").text(a)}var re=/\(\d+\)[ ](.*)/;Object.defineProperty(document,"title",{configurable:!0,set:function(a){updateTitle(a)},get:function(){return $("title").text()}}),setInterval(function(){updateTitle(document.title)},3e3);'
 			,custom_domain: true
 		},
 		{
@@ -571,6 +577,8 @@ Ext.define('Rambox.store.ServicesList', {
 			,description: 'Riot is a simple and elegant collaboration environment that gathers all of your different conversations and app integrations into one single app.'
 			,url: 'https://riot.im/app/'
 			,type: 'messaging'
+			,js_unread: 'function checkUnread(){var a=document.getElementsByClassName("mx_RoomTile_nameContainer"),b=0;for(i=0;i<a.length;i++){var c=a[i].getElementsByClassName("mx_RoomTile_badge");for(ii=0;ii<c.length;ii++)parseInt(c[ii].textContent.trim())%1===0&&(b+=parseInt(c[ii].textContent.trim()))}updateBadge(b)}function updateBadge(a){a>=1?document.title="("+a+") "+originalTitle:document.title=originalTitle}var originalTitle=document.title;setInterval(checkUnread,1e3);'
+			,custom_domain: true
 		},
 		{
 			 id: 'actor'
@@ -670,14 +678,57 @@ Ext.define('Rambox.store.ServicesList', {
 			,type: 'messaging'
 			,js_unread: '(function() { let originalTitle = document.title; function checkUnread() { let count = null; let notificationElement = document.querySelector(\'[data-update="unread_conversations"]\'); if (notificationElement && notificationElement.style.display !== \'none\') { count = parseInt(notificationElement.textContent.trim(), 10); } updateBadge(count); } function updateBadge(count) { if (count && count >= 1) { rambox.setUnreadCount(count); } else { rambox.clearUnreadCount(); } } setInterval(checkUnread, 3000); checkUnread(); })();'
 			,dont_update_unread_from_title: true
-    },
-    {
-			 id: 'Workplace'
+		},
+		{
+			 id: 'workplace'
 			,logo: 'workplace.png'
-			,name: 'Workplace by Facebook'
+			,name: 'Workplace'
 			,description: 'Connect everyone in your company and turn ideas into action. Through group discussion, a personalised News Feed, and voice and video calling, work together and get more done. Workplace is an ad-free space, separate from your personal Facebook account.'
 			,url: 'https://___.facebook.com/'
 			,type: 'messaging'
+		},
+		{
+			 id: 'teams'
+			,logo: 'teams.png'
+			,name: 'Teams'
+			,description: 'Microsoft Teams is the chat-based workspace in Office 365 that integrates all the people, content, and tools your team needs to be more engaged and effective.'
+			,url: 'https://teams.microsoft.com'
+			,type: 'messaging'
+		},
+		{
+			 id: 'kezmo'
+			,logo: 'kezmo.png'
+			,name: 'Kezmo'
+			,description: 'Kezmo is an enterprise chat and collaboration tool to help teams get things done. It’s an email alternative for secure team communication.'
+			,url: 'https://app.kezmo.com/web/'
+			,type: 'messaging'
+		},
+		{
+			 id: 'lounge'
+			,logo: 'lounge.png'
+			,name: 'The Lounge'
+			,description: 'Self-hosted web IRC client.'
+			,url: '___'
+			,type: 'messaging'
+			,js_unread: 'function checkUnread(){var a=document.getElementsByClassName("badge highlight"),b=0;for(i=0;i<a.length;i++)parseInt(a[i].textContent.trim())%1===0&&(b+=parseInt(a[i].textContent.trim()));updateBadge(b)}function updateBadge(a){a>=1?document.title="("+a+") "+originalTitle:document.title=originalTitle}var originalTitle=document.title;setInterval(checkUnread,1e3);'
+		},
+		{
+			 id: 'linkedin'
+			,logo: 'linkedin.png'
+			,name: 'LinkedIn Messaging'
+			,description: 'Manage your professional identity. Build and engage with your professional network. Access knowledge, insights and opportunities.'
+			,url: 'https://www.linkedin.com/messaging'
+			,type: 'messaging'
+		},
+		{
+			 id: 'zyptonite'
+			,logo: 'zyptonite.png'
+			,name: 'Zyptonite'
+			,description: 'Zyptonite is the ultimate cyber secure communication tool for enterprise customers designed to address the need to securely communicate via voice, video, and chat, and transfer files and information across a global mobile workforce.'
+			,url: 'https://app.zyptonite.com/'
+			,type: 'messaging'
+			,js_unread: 'function checkUnread(){var a=document.getElementsByClassName("z-messages"),b=0;for(i=0;i<a.length;i++)b+=parseInt(a[i].innerHTML.trim());updateBadge(b)}function updateBadge(a){a>=1?rambox.setUnreadCount(a):rambox.clearUnreadCount()}setInterval(checkUnread,3e3);'
+			,dont_update_unread_from_title: true
 		}
   ]
 });
